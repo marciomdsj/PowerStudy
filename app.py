@@ -18,12 +18,47 @@ st.set_page_config(
 with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ──────────── Inicializar Banco de Dados ────────────
+# ──────────── Identificação do Usuário ────────────
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
+
+if not st.session_state["username"]:
+    st.markdown("""
+    <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:4rem">⚡</div>
+        <h1 style="background:linear-gradient(135deg,#6C63FF,#E040FB);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            font-size:3rem;margin:10px 0">PowerStudy</h1>
+        <p style="opacity:0.6;font-size:1.1rem;margin-bottom:40px">
+            Dashboard de Estudos Universitários
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_l, col_c, col_r = st.columns([1, 2, 1])
+    with col_c:
+        username = st.text_input(
+            "👤 Digite seu nome de usuário para começar:",
+            placeholder="Ex: marcio, joao, maria",
+            key="username_input",
+        )
+        st.caption("Cada usuário tem seus próprios dados separados.")
+
+        if st.button("🚀 Entrar", use_container_width=True):
+            if username.strip():
+                st.session_state["username"] = username.strip()
+                st.rerun()
+            else:
+                st.error("❌ Digite um nome de usuário!")
+    st.stop()
+
+# Configurar banco de dados para o usuário atual
+db.set_current_user(st.session_state["username"])
 db.init_db()
 
 # ──────────── Sidebar ────────────
 with st.sidebar:
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align:center;padding:20px 0">
         <div style="font-size:2.5rem">⚡</div>
         <h1 style="margin:0;font-size:1.8rem;
@@ -33,10 +68,14 @@ with st.sidebar:
             PowerStudy
         </h1>
         <p style="opacity:0.6;margin-top:5px;font-size:0.85rem">
-            Dashboard de Estudos
+            👤 {st.session_state['username']}
         </p>
     </div>
     """, unsafe_allow_html=True)
+
+    if st.button("🚪 Trocar Usuário", use_container_width=True):
+        st.session_state["username"] = ""
+        st.rerun()
 
     st.markdown("---")
 
@@ -47,6 +86,7 @@ with st.sidebar:
             "📊 Dashboard",
             "📝 Registrar Estudo",
             "📚 Matérias",
+            "📅 Cronograma",
             "📈 Analytics",
             "📄 Plano de Aula",
             "🏆 Gamificação",
@@ -118,6 +158,10 @@ elif page == "📝 Registrar Estudo":
 elif page == "📚 Matérias":
     from components import subjects
     subjects.render()
+
+elif page == "📅 Cronograma":
+    from components import schedule
+    schedule.render()
 
 elif page == "📈 Analytics":
     from components import analytics

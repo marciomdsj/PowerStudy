@@ -1,18 +1,36 @@
 """
 PowerStudy - Camada de acesso ao banco de dados SQLite
+Cada usuário tem seu próprio banco: data/{username}.db
 """
 import sqlite3
 import os
 from datetime import datetime, timedelta
 from database.models import SCHEMA
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "powerstudy.db")
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+
+# Usuário atual (definido pelo app.py via set_current_user)
+_current_user = "default"
+
+
+def set_current_user(username: str):
+    """Define o usuário atual. Cada usuário tem seu próprio banco."""
+    global _current_user
+    _current_user = username.strip().lower().replace(" ", "_")
+
+
+def get_current_user() -> str:
+    return _current_user
+
+
+def _get_db_path() -> str:
+    return os.path.join(DATA_DIR, f"{_current_user}.db")
 
 
 def get_connection():
-    """Retorna uma conexão com o banco SQLite."""
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    """Retorna uma conexão com o banco SQLite do usuário atual."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
@@ -393,3 +411,49 @@ def get_weekly_hours(subject_id: int):
     """, (subject_id, start_of_week.isoformat())).fetchone()
     conn.close()
     return row["hours"] if row else 0.0
+
+
+# ──────────────────────── SCHEDULE ────────────────────────
+
+WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+
+
+def add_schedule_event(subject_id: int, day_of_week: int, start_time: str,
+                       end_time: str, title: str = "", notes: str = "", color: str = ""):
+    conn = get_connection()
+    conn.execute(
+        """INSERT INTO schedule_events (subject_id, day_of_week, start_time, end_time, title, notes, color)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (subject_id, day_of_week, start_time, end_time, title, notes, color),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_schedule_events(day_of_week: int = None):
+    conn = get_connection()
+    if day_of_week is not None:
+        rows = conn.execute("""
+            SELECT se.*, s.name as subject_name, s.color as subject_color, s.semester
+            FROM schedule_events se
+            JOIN subjects s ON se.subject_id = s.id
+            WHERE se.day_of_week = ?
+            ORDER BY se.start_time
+        """, (day_of_week,)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT se.*, s.name as subject_name, s.color as subject_color, s.semester
+            FROM schedule_events se
+            JOIN subjects s ON se.subject_id = s.id
+            ORDER BY se.day_of_week, se.start_time
+        """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def delete_schedule_event(event_id: int):
+    conn = get_connection()
+    conn.execute("DELETE FROM schedule_events WHERE id = ?", (event_id,))
+    conn.commit()
+    conn.close()
+

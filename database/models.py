@@ -49,4 +49,17 @@ CREATE TABLE IF NOT EXISTS goals (
     semester INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS schedule_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    title TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    color TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
 """
