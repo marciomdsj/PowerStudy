@@ -32,30 +32,31 @@ def render():
         with col_date:
             timer_date = st.date_input("📅 Data", value=date.today(), key="timer_date")
 
-        # Timer
-        timer.render_timer()
+        # Timer (retorna minutos estudados)
+        timer_minutes = timer.render_timer()
 
         timer_topic = st.text_input("📖 Tópico estudado (opcional)", key="timer_topic")
         timer_notes = st.text_area("📝 Notas (opcional)", height=60, key="timer_notes")
 
-        if st.button("✅ Registrar Sessão do Timer", use_container_width=True, key="submit_timer"):
-            total_minutes = st.session_state.get("recorded_minutes", 0)
-            if total_minutes <= 0:
+        if st.button("✅ Registrar Sessão", use_container_width=True, key="submit_timer"):
+            if timer_minutes <= 0:
                 st.error("❌ Use o timer ou preencha os minutos antes de registrar!")
             else:
                 db.add_session(
                     subject_id=timer_subject["id"],
                     date=timer_date.isoformat(),
-                    duration_minutes=total_minutes,
+                    duration_minutes=timer_minutes,
                     topic=timer_topic,
                     notes=timer_notes,
                 )
-                pts = scoring.calculate_session_points(total_minutes)
-                st.success(f"✅ Sessão de **{total_minutes} min** registrada! **+{pts['total_points']} pontos**")
+                pts = scoring.calculate_session_points(timer_minutes)
+                st.success(f"✅ Sessão de **{timer_minutes} min** registrada! **+{pts['total_points']} pontos**")
                 if pts["bonuses"]:
                     for bonus in pts["bonuses"]:
                         st.info(bonus)
-                st.session_state["timer_minutes"] = 0
+                # Reset timer
+                if "timer_state" in st.session_state:
+                    del st.session_state["timer_state"]
                 st.balloons()
 
     # ─── Tab 2: Manual ────
