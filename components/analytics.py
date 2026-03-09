@@ -121,7 +121,7 @@ def render():
     df["week"] = df["date"].dt.isocalendar().week.astype(int)
     df["year"] = df["date"].dt.year
     weekly = df.groupby(["year", "week"])["hours"].sum().reset_index()
-    weekly["label"] = weekly.apply(lambda r: f"{r['year']}-S{r['week']:02d}", axis=1)
+    weekly["label"] = weekly.apply(lambda r: f"{int(r['year'])}-S{int(r['week']):02d}", axis=1)
 
     fig = px.line(
         weekly, x="label", y="hours",
