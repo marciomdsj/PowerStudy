@@ -1,0 +1,52 @@
+"""
+PowerStudy - Definição de tabelas SQLite
+"""
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS subjects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    semester INTEGER NOT NULL DEFAULT 1,
+    color TEXT NOT NULL DEFAULT '#6C63FF',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS study_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    topic TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS syllabi (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id INTEGER NOT NULL,
+    name TEXT NOT NULL DEFAULT 'Plano de Aula',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS syllabus_topics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    syllabus_id INTEGER NOT NULL,
+    subject_id INTEGER NOT NULL,
+    topic_name TEXT NOT NULL,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    is_studied INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (syllabus_id) REFERENCES syllabi(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id INTEGER NOT NULL,
+    weekly_hours_target REAL NOT NULL DEFAULT 5.0,
+    semester INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
+"""
